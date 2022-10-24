@@ -147,6 +147,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.item_cnt = 0
 
+
         # 使用QListWidget来记录已有的图元，并用于选择图元。注：这是图元选择的简单实现方法，更好的实现是在画布中直接用鼠标选择图元
         self.list_widget = QListWidget(self)
         self.list_widget.setMinimumWidth(200)
@@ -188,6 +189,7 @@ class MainWindow(QMainWindow):
         # 连接信号和槽函数
         exit_act.triggered.connect(qApp.quit)
         line_naive_act.triggered.connect(self.line_naive_action)
+        line_dda_act.triggered.connect(self.line_dda_action)
         self.list_widget.currentTextChanged.connect(self.canvas_widget.selection_changed)
 
         # 设置主窗口的布局
@@ -208,10 +210,17 @@ class MainWindow(QMainWindow):
 
     def line_naive_action(self):
         self.canvas_widget.start_draw_line('Naive', self.get_id())
+
         self.statusBar().showMessage('Naive算法绘制线段')
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
 
+    def line_dda_action(self):
+        self.canvas_widget.start_draw_line('DDA', self.get_id())
+
+        self.statusBar().showMessage('DDA算法绘制线段')
+        self.list_widget.clearSelection()
+        self.canvas_widget.clear_selection()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
