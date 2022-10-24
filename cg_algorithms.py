@@ -48,9 +48,9 @@ def draw_line(p_list, algorithm):
                 x = x - xUnitstep #这里为什么是减号？
                 y = y - yUnitstep #这里为什么是减号？
                 result.append((x,y))
-        pass
+       # pass
     elif algorithm == 'Bresenham':
-        pass
+         pass
     return result
 
 
