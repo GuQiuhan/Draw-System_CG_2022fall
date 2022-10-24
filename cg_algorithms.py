@@ -26,6 +26,28 @@ def draw_line(p_list, algorithm):
             for x in range(x0, x1 + 1):
                 result.append((x, int(y0 + k * (x - x0))))
     elif algorithm == 'DDA':
+        if x1==x0:
+            for y in range(y0, y1 + 1):
+                result.append((x0, y))
+        elif y1==y0:
+            for x in range(x0, x1 + 1):
+                result.append((x, y0))
+        else:
+
+            xDis = x1 - x0  # x的增量
+            yDis = y1 - y0  # y的增量
+            if abs(xDis) > abs(yDis):
+                maxstep = abs(xDis)
+            else:
+                maxstep = abs(yDis)
+            xUnitstep = xDis / maxstep  # x每步骤增量
+            yUnitstep = yDis / maxstep  # y的每步增量
+            x = x1
+            y = y1
+            for k in range(maxstep):
+                x = x - xUnitstep #这里为什么是减号？
+                y = y - yUnitstep #这里为什么是减号？
+                result.append((x,y))
         pass
     elif algorithm == 'Bresenham':
         pass
@@ -42,7 +64,7 @@ def draw_polygon(p_list, algorithm):
     result = []
     for i in range(len(p_list)):
         line = draw_line([p_list[i - 1], p_list[i]], algorithm)
-        result += linew
+        result += line
     return result
 
 
