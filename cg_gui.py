@@ -35,17 +35,27 @@ class MyCanvas(QGraphicsView):
         self.temp_algorithm = ''
         self.temp_id = ''
         self.temp_item = None
+        self.indeedPaint=False #是否真的画了
+        self.isNewPolygon=False #判断是否是新图元
 
     def start_draw_line(self, algorithm, item_id):
+
         self.status = 'line'
         self.temp_algorithm = algorithm
         self.temp_id = item_id
+        print(item_id)
 
     def finish_draw(self):
         self.temp_id = self.main_window.get_id()
 
     def start_draw_polygon(self, algorithm, item_id):
         self.status = 'polygon'
+        self.temp_algorithm = algorithm
+        self.temp_id = item_id
+        self.isNewPolygon=True
+
+    def start_draw_free(self, algorithm, item_id):
+        self.status = 'freePainting'
         self.temp_algorithm = algorithm
         self.temp_id = item_id
 
@@ -74,10 +84,17 @@ class MyCanvas(QGraphicsView):
             self.temp_item = MyItem(self.temp_id, self.status, [[x, y], [x, y]], self.temp_algorithm)
             self.scene().addItem(self.temp_item)
         elif self.status=='polygon': #表示鼠标是在画多边形
-            self.temp_item = MyItem(self.temp_id, self.status, [[x, y], [x, y]], self.temp_algorithm)
+            if self.isNewPolygon:
+                self.temp_item = MyItem(self.temp_id, self.status, [[x, y]], self.temp_algorithm)
+                self.scene().addItem(self.temp_item)
+            else:
+                self.temp_item.p_list.append([x, y]) # 表示目前的坐标
+        elif self.status=='freePainting': #表示鼠标是在自由画
+            self.temp_item = MyItem(self.temp_id, self.status, [[x, y]], self.temp_algorithm)
             self.scene().addItem(self.temp_item)
         self.updateScene([self.sceneRect()])
         super().mousePressEvent(event)
+        self.indeedPaint=True;
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         pos = self.mapToScene(event.localPos().toPoint())
@@ -85,17 +102,24 @@ class MyCanvas(QGraphicsView):
         y = int(pos.y())
         if self.status == 'line':
             self.temp_item.p_list[1] = [x, y] #表示直线的终点
-        elif self.status == 'polygon':
+        elif self.status=='freePainting' or self.status=='polygon':
             self.temp_item.p_list.append([x, y])# 表示目前的坐标
+
 
         self.updateScene([self.sceneRect()])
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-        if self.status == 'line' or self.status == 'polygon':
+        if self.status == 'line'  or self.status=='freePainting':
             self.item_dict[self.temp_id] = self.temp_item  #将当前的编号和当前的图元加入画布
             self.list_widget.addItem(self.temp_id)
             self.finish_draw()
+        elif self.status == 'polygon':
+            if self.isNewPolygon:
+                self.item_dict[self.temp_id] = self.temp_item  # 将当前的编号和当前的图元加入画布
+                self.list_widget.addItem(self.temp_id)
+                self.isNewPolygon=False #将新创建的多边形图元加入后，就不是新图元了
+        self.updateScene([self.sceneRect()])
         super().mouseReleaseEvent(event)
 
 
@@ -134,6 +158,13 @@ class MyItem(QGraphicsItem):
             if self.selected:
                 painter.setPen(QColor(255, 0, 0))  # 选中图元框红框
                 painter.drawRect(self.boundingRect())
+        elif self.item_type == 'freePainting':
+            item_pixels = alg.draw_free(self.p_list, self.algorithm)
+            for p in item_pixels:
+                painter.drawPoint(*p)
+            if self.selected:
+                painter.setPen(QColor(255, 0, 0))  # 选中图元框红框
+                painter.drawRect(self.boundingRect())
 
         elif self.item_type == 'ellipse':
             pass
@@ -149,7 +180,7 @@ class MyItem(QGraphicsItem):
             w = max(x0, x1) - x
             h = max(y0, y1) - y
             return QRectF(x - 1, y - 1, w + 2, h + 2)
-        elif self.item_type == 'polygon':
+        elif self.item_type == 'polygon' or self.item_type=='freePainting':
             x0,y0=self.p_list[0] #最小值
             x1,y1=x0,y0 #最大值
             for x,y in self.p_list:
@@ -166,6 +197,10 @@ class MyItem(QGraphicsItem):
         elif self.item_type == 'curve':
             pass
 
+    def get_id(self):
+        _id = self.id
+        self.item_cnt += 1
+        return _id
 
 class MainWindow(QMainWindow):
     """
@@ -206,6 +241,7 @@ class MainWindow(QMainWindow):
         curve_menu = draw_menu.addMenu('曲线')
         curve_bezier_act = curve_menu.addAction('Bezier')
         curve_b_spline_act = curve_menu.addAction('B-spline')
+        freePainting_act = draw_menu.addAction('自由笔画')
         edit_menu = menubar.addMenu('编辑')
         translate_act = edit_menu.addAction('平移')
         rotate_act = edit_menu.addAction('旋转')
@@ -221,6 +257,7 @@ class MainWindow(QMainWindow):
         line_bresenham_act.triggered.connect(self.line_bresenham_action)
         polygon_dda_act.triggered.connect(self.polygon_dda_action)
         polygon_bresenham_act.triggered.connect(self.polygon_bresenham_action)
+        freePainting_act.triggered.connect(self.freePainting_action)
         self.list_widget.currentTextChanged.connect(self.canvas_widget.selection_changed)
 
         # 设置主窗口的布局
@@ -239,6 +276,9 @@ class MainWindow(QMainWindow):
         self.item_cnt += 1
         return _id
 
+    def add_id(self):
+        self.item_cnt+=1
+
     def line_naive_action(self):
         self.canvas_widget.start_draw_line('Naive', self.get_id())
         self.statusBar().showMessage('Naive算法绘制线段')
@@ -256,8 +296,9 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage('Bresenham算法绘制线段')
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
+
     def polygon_dda_action(self):
-        self.canvas_widget.start_draw_polygon('DDA', self.get_id())  # 待写
+        self.canvas_widget.start_draw_polygon('DDA', self.get_id())
         self.statusBar().showMessage('DDA算法绘制多边形')
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
@@ -265,6 +306,12 @@ class MainWindow(QMainWindow):
     def polygon_bresenham_action(self):
         self.canvas_widget.start_draw_polygon('DDA', self.get_id())  # 待写
         self.statusBar().showMessage('Bresenham算法绘制多边形')
+        self.list_widget.clearSelection()
+        self.canvas_widget.clear_selection()
+
+    def freePainting_action(self):
+        self.canvas_widget.start_draw_free('DDA', self.get_id())
+        self.statusBar().showMessage('自由笔画')
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
 
