@@ -38,11 +38,17 @@ if __name__ == '__main__':  # python入口函数
                         for x, y in pixels:
                             canvas[height - 1 - y, x] = color  # 画布的坐标原点设定
                     elif item_type == 'polygon':
-                        pass
+                        pixels = alg.draw_polygon(p_list, algorithm)  # 函数返回的是像素点坐标列表
+                        for x, y in pixels:
+                            canvas[height - 1 - y, x] = color  # 画布的坐标原点设定
                     elif item_type == 'ellipse':
-                        pass
+                        pixels = alg.draw_ellipse(p_list)  # 函数返回的是像素点坐标列表
+                        for x, y in pixels:
+                            canvas[height - 1 - y, x] = color  # 画布的坐标原点设定
                     elif item_type == 'curve':
-                        pass
+                        pixels = alg.draw_curve(p_list, algorithm)  # 函数返回的是像素点坐标列表
+                        for x, y in pixels:
+                            canvas[height - 1 - y, x] = color  # 画布的坐标原点设定
                 Image.fromarray(canvas).save(os.path.join(output_dir, save_name + '.bmp'), 'bmp')
             elif line[0] == 'setColor':
                 pen_color[0] = int(line[1])
@@ -56,7 +62,20 @@ if __name__ == '__main__':  # python入口函数
                 y1 = int(line[5])
                 algorithm = line[6]
                 item_dict[item_id] = ['line', [[x0, y0], [x1, y1]], algorithm, np.array(pen_color)]  # 存入item_dict，方便save的时候
-            ...
+            elif line[0]=='drawPolygon':
+                pass
+            elif line[0]=='drawEllipse':
+                pass
+            elif line[0]=='drawCurve':
+                pass
+            elif line[0]=='translate':
+                pass
+            elif line[0]=='rotate':
+                pass
+            elif line[0]=='scale':
+                pass
+            elif line[0]=='clip':
+                pass
 
             line = fp.readline()
 
