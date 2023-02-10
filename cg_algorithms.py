@@ -17,20 +17,20 @@ def draw_line(p_list, algorithm):
     result = []
     if algorithm == 'Naive':
         if x0 == x1:
-            for y in range(y0, y1 + 1):
+            for y in range(int(y0), int(y1 + 1)):
                 result.append((x0, y))
         else:
             if x0 > x1:
                 x0, y0, x1, y1 = x1, y1, x0, y0
             k = (y1 - y0) / (x1 - x0)
-            for x in range(x0, x1 + 1):
+            for x in range(int(x0), int(x1 + 1)):
                 result.append((x, int(y0 + k * (x - x0))))
     elif algorithm == 'DDA':
         if x1 == x0:
-            for y in range(y0, y1 + 1):
+            for y in range(int(y0), int(y1 + 1)):
                 result.append((x0, y))
         elif y1 == y0:
-            for x in range(x0, x1 + 1):
+            for x in range(int(x0), int(x1 + 1)):
                 result.append((x, y0))
         else:
             xDis = x1 - x0  # x的增量
@@ -311,11 +311,11 @@ def rotate(p_list, x, y, r):
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1], [x_2, y_2], ...]) 变换后的图元参数
     """
     for p in p_list:
-        a = p[0]
-        b = p[1]
+        a = p[0] - x
+        b = p[1] - y
         r = r * math.pi / 180  # 角度转弧度
-        p[0] = a * math.cos(r) - b * math.sin(r);
-        p[1] = a * math.sin(r) + b * math.cos(r);
+        p[0] = a * math.cos(r) - b * math.sin(r) + x
+        p[1] = a * math.sin(r) + b * math.cos(r) + y
 
     return p_list
 
@@ -390,6 +390,7 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
             # If both endpoints are outside rectangle
             elif (code1 & code2) != 0:
                 result = []
+                #print('here')
                 break
 
             # Some segment lies within the rectangle
