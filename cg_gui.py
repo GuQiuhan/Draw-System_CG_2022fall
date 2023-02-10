@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 #import os
 import sys
-
+import os
 import cg_algorithms as alg
 from typing import Optional
 from PyQt5.QtWidgets import (
@@ -16,8 +16,7 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QWidget,
     QStyleOptionGraphicsItem, QLabel, QPushButton, QLineEdit, QDialog, QMessageBox, QComboBox, QFrame, QScrollBar,
-    QSlider, QFormLayout, QVBoxLayout)
-
+    QSlider, QFormLayout, QVBoxLayout, QFileDialog)
 from PyQt5.QtGui import QPainter, QMouseEvent, QColor, QPixmap, QPen, QPalette
 from PyQt5.QtCore import QRectF, pyqtSlot, Qt
 from PyQt5 import QtCore
@@ -305,7 +304,7 @@ class MainWindow(QMainWindow):
         # 设置菜单栏
         menubar = self.menuBar()
         file_menu = menubar.addMenu('文件')
-        set_pen_act = file_menu.addAction('设置画笔')
+        save_canvas_act = file_menu.addAction('保存画布')
         reset_canvas_act = file_menu.addAction('重置画布')
         exit_act = file_menu.addAction('退出')
         draw_menu = menubar.addMenu('绘制')
@@ -384,6 +383,7 @@ class MainWindow(QMainWindow):
         curve_b_spline_act.triggered.connect(self.curve_b_spline_action)
         freePainting_act.triggered.connect(self.freePainting_action)
         reset_canvas_act.triggered.connect(self.reset_canvas_action)
+        save_canvas_act.triggered.connect(self.save_canvas_action)
         self.list_widget.currentTextChanged.connect(self.canvas_widget.selection_changed)
 
         # 设置主窗口的布局
@@ -485,6 +485,15 @@ class MainWindow(QMainWindow):
 
         self.scene.clear()
 
+    def save_canvas_action(self):
+        pix = self.canvas_widget.grab()
+        save_window=SavePix(pix)
+        if save_window.exec()==QDialog.Accepted:
+            save_window.close()
+            pix_window = Pix(pix)
+            pix_window.exec()
+
+
     # 设置形状下拉框函数
     def setShape(self,value):
         if value==0: #直线
@@ -523,6 +532,92 @@ class MainWindow(QMainWindow):
             pen.setStyle(Qt.DashDotLine)
         elif value==4:
             pen.setStyle(Qt.DashDotDotLine)
+
+class SavePix(QDialog):
+    """
+    填写保存路径窗口
+    """
+
+    def __init__(self,pixmap):
+        super().__init__()
+
+        self.setWindowTitle("保存画布")
+        self.resize(400, 200)
+        self.pix=pixmap
+        self.label1 = QLabel('保存至:', self)
+        self.line1 = QLineEdit(self)
+        self.button = QPushButton('···')
+        self.button.clicked.connect(self.showDir)
+        self.hlayout1 = QHBoxLayout()
+        self.hlayout1.addWidget(self.label1)
+        self.hlayout1.addWidget(self.line1)
+        self.hlayout1.addWidget(self.button)
+
+        self.label2 = QLabel('命名为:', self)
+        self.line2 = QLineEdit(self)
+        self.hlayout2 = QHBoxLayout()
+        self.hlayout2.addWidget(self.label2)
+        self.hlayout2.addWidget(self.line2)
+
+        self.button1 = QPushButton("Cancel", self)
+        self.button1.clicked.connect(self.cancel)
+        self.button2 = QPushButton("Save", self)
+        self.button2.clicked.connect(self.save)
+        self.hlayout3 = QHBoxLayout()
+        self.hlayout3.addWidget(self.button1)
+        self.hlayout3.addWidget(self.button2)
+
+        self.vlayout = QVBoxLayout()
+        self.vlayout.addLayout(self.hlayout1)
+        self.vlayout.addLayout(self.hlayout2)
+        self.vlayout.addLayout(self.hlayout3)
+
+        self.setLayout(self.vlayout)
+
+
+
+    @pyqtSlot()
+    def save(self):  # 查错并确认保存
+        if self.line1.text()!= "" :
+            if os.path.exists(self.line1.text()): # 目录合法
+                name=self.line1.text()+"/"+self.line2.text()+".jpg"
+                self.pix.save(name)
+                self.accept()
+
+            else:
+                QMessageBox.warning(self, "Warning", "Path Error!", QMessageBox.Ok)
+                self.line1.clear()  # 清空，用于下一次注册
+                self.line1.setFocus()
+
+
+        else:
+            QMessageBox.warning(self, "Warning","Path can not be empty!", QMessageBox.Ok)
+            self.line1.clear()  # 清空，用于下一次注册
+            self.line1.setFocus()
+
+
+    def cancel(self):  # 取消保存
+        self.reject()
+
+    def showDir(self):
+        m = QFileDialog.getExistingDirectory(None, "Select the directory:")  # 起始路径
+        self.line1.setText(m)
+
+class Pix(QDialog):
+    """
+    展示保存图片窗口
+    """
+    def __init__(self,pixmap):
+        super().__init__()
+        self.setWindowTitle("图片展示")
+        self.layout = QHBoxLayout()
+        self.label = QLabel()
+        self.label.resize(800, 480)
+        self.pix = pixmap.scaled(self.label.width(), self.label.height())
+        self.label.setPixmap(self.pix)
+        self.layout.addWidget(self.label)
+        self.setLayout(self.layout)
+
 
 class Login(QDialog):
     """
