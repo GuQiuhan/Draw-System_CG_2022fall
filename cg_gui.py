@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (
     QWidget,
     QStyleOptionGraphicsItem, QLabel, QPushButton, QLineEdit, QDialog, QMessageBox, QComboBox, QFrame, QScrollBar,
     QSlider, QFormLayout, QVBoxLayout, QFileDialog, QSpinBox, QDoubleSpinBox)
-from PyQt5.QtGui import QPainter, QMouseEvent, QColor, QPixmap, QPen, QPalette
+from PyQt5.QtGui import QPainter, QMouseEvent, QColor, QPixmap, QPen, QPalette, QBrush
 from PyQt5.QtCore import QRectF, pyqtSlot, Qt
 from PyQt5 import QtCore
 
@@ -83,6 +83,8 @@ class MyCanvas(QGraphicsView):
         self.temp_id = item_id
 
     def start_translate(self):
+        if self.selected_id=='':
+            return
         self.temp_item= self.item_dict[self.selected_id]
         translate_window=Translate()
         if translate_window.exec()==QDialog.Accepted:
@@ -90,7 +92,7 @@ class MyCanvas(QGraphicsView):
             dy = translate_window.get_dy()
             p_list2 = alg.translate(self.temp_item.p_list, dx, dy)
             self.temp_item = MyItem(self.temp_item.id, self.temp_item.item_type, p_list2, self.temp_item.algorithm, self.temp_item.pen)
-            self.item_dict[id] = self.temp_item
+            self.item_dict[self.selected_id] = self.temp_item
             self.item_dict[self.selected_id].update()
 
 
@@ -104,7 +106,7 @@ class MyCanvas(QGraphicsView):
             p_list2 = alg.rotate(self.temp_item.p_list, x, y, r)
             self.temp_item = MyItem(self.temp_item.id, self.temp_item.item_type, p_list2, self.temp_item.algorithm,
                                     self.temp_item.pen)
-            self.item_dict[id] = self.temp_item
+            self.item_dict[self.selected_id] = self.temp_item
             self.item_dict[self.selected_id].update()
 
     def start_scale(self):
@@ -117,7 +119,7 @@ class MyCanvas(QGraphicsView):
             p_list2 = alg.scale(self.temp_item.p_list, x, y, s)
             self.temp_item = MyItem(self.temp_item.id, self.temp_item.item_type, p_list2, self.temp_item.algorithm,
                                     self.temp_item.pen)
-            self.item_dict[id] = self.temp_item
+            self.item_dict[self.selected_id] = self.temp_item
             self.item_dict[self.selected_id].update()
 
     def start_clip(self,algorithm):
@@ -131,17 +133,30 @@ class MyCanvas(QGraphicsView):
             y_min = clip_window.get_y_min()
             x_max = clip_window.get_x_max()
             y_max = clip_window.get_y_max()
+            if self.temp_item.scene()!=None:
+                self.scene().removeItem(self.temp_item)
             p_list2 = alg.clip(self.temp_item.p_list, x_min, y_min, x_max, y_max,algorithm)
+
+            item_list_p = self.scene().items()
+            for p in  item_list_p:
+                if p.id==self.temp_item.id:
+                    self.scene().removeItem(p)
+                    break
+
             self.temp_item = MyItem(self.temp_item.id, self.temp_item.item_type, p_list2, self.temp_item.algorithm,
                                     self.temp_item.pen)
             self.item_dict[self.selected_id] = self.temp_item
-            self.item_dict[self.selected_id].update()
+            self.item_dict[self.selected_id].selected = True
+            self.scene().addItem(self.temp_item)
 
 
     def clear_selection(self):
-        if self.selected_id != '':
+        if self.selected_id != '' and self.item_dict!= {} and self.item_dict[self.selected_id] != None:
             self.item_dict[self.selected_id].selected = False
+            self.item_dict[self.selected_id].update()
             self.selected_id = ''
+        self.updateScene([self.sceneRect()])
+
 
 
     def selection_changed(self, selected):
@@ -248,7 +263,8 @@ class Translate(QDialog):
 
         self.button1 = QPushButton("Cancel", self)
         self.button1.clicked.connect(self.cancel)
-        self.button2 = QPushButton("Tranlate", self)
+        self.button2 = QPushButton("Translate", self)
+        self.button2.setFocus()
         self.button2.clicked.connect(self.translate)
         self.hlayout3 = QHBoxLayout()
         self.hlayout3.addWidget(self.button1)
@@ -317,6 +333,7 @@ class Rotate(QDialog):
         self.button1.clicked.connect(self.cancel)
         self.button2 = QPushButton("Rotate", self)
         self.button2.clicked.connect(self.rotate)
+        self.button2.setFocus()
         self.hlayout4 = QHBoxLayout()
         self.hlayout4.addWidget(self.button1)
         self.hlayout4.addWidget(self.button2)
@@ -388,6 +405,7 @@ class Scale(QDialog):
         self.button1.clicked.connect(self.cancel)
         self.button2 = QPushButton("Scale", self)
         self.button2.clicked.connect(self.scale)
+        self.button2.setFocus()
         self.hlayout4 = QHBoxLayout()
         self.hlayout4.addWidget(self.button1)
         self.hlayout4.addWidget(self.button2)
@@ -468,6 +486,7 @@ class Clip(QDialog):
         self.button1.clicked.connect(self.cancel)
         self.button2 = QPushButton("Clip", self)
         self.button2.clicked.connect(self.clip)
+        self.button2.setFocus()
         self.hlayout5 = QHBoxLayout()
         self.hlayout5.addWidget(self.button1)
         self.hlayout5.addWidget(self.button2)
@@ -528,6 +547,7 @@ class MyItem(QGraphicsItem):
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: Optional[QWidget] = ...) -> None:
         painter.setPen(self.pen) #首先设置画笔
         if self.item_type == 'line':
+            print(self.p_list)
             item_pixels = alg.draw_line(self.p_list, self.algorithm)
             for p in item_pixels:
                 painter.drawPoint(*p) # 使用QPainter来将具体像素数值转化到图上
@@ -580,6 +600,8 @@ class MyItem(QGraphicsItem):
 
     def boundingRect(self) -> QRectF:
         if self.item_type == 'line':
+            if self.p_list==[]:
+                return QRectF(0,0,0,0)
             x0, y0 = self.p_list[0]
             x1, y1 = self.p_list[1]
             x = min(x0, x1)
@@ -599,6 +621,11 @@ class MyItem(QGraphicsItem):
             h = y1-y0
             return QRectF(x0-1, y0 - 1, w + 2, h + 2)
 
+    # def mousePressEvent(self,event: QMouseEvent):
+    #     print("here")
+    #     self.setFocus()
+    #     self.selected=True
+    #     self.update()
 
     def get_id(self):
         _id = self.id
@@ -620,6 +647,9 @@ class MainWindow(QMainWindow):
         # 使用QGraphicsView作为画布
         self.scene = QGraphicsScene(self)
         self.scene.setSceneRect(0, 0, 600, 600)
+
+        #self.setStyleSheet("background-image: url(QTImages/bkg.jpg);")
+
         self.canvas_widget = MyCanvas(self.scene, self)
         self.canvas_widget.setFixedSize(600, 600)
         self.canvas_widget.main_window = self
@@ -769,6 +799,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_line('Naive', self.get_id(),pen)
         self.statusBar().showMessage('Naive算法绘制线段')
         self.list_widget.clearSelection()
+        self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def line_dda_action(self):
@@ -777,6 +808,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_line('DDA', self.get_id(),pen)
         self.statusBar().showMessage('DDA算法绘制线段')
         self.list_widget.clearSelection()
+        self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def line_bresenham_action(self):
@@ -785,6 +817,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_line('Bresenham', self.get_id(),pen)  #待写
         self.statusBar().showMessage('Bresenham算法绘制线段')
         self.list_widget.clearSelection()
+        self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def polygon_dda_action(self):
@@ -793,6 +826,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_polygon('DDA', self.get_id(),pen)
         self.statusBar().showMessage('DDA算法绘制多边形')
         self.list_widget.clearSelection()
+        self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def polygon_bresenham_action(self):
@@ -801,6 +835,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_polygon('Bresenham', self.get_id(),pen)
         self.statusBar().showMessage('Bresenham算法绘制多边形')
         self.list_widget.clearSelection()
+        self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def ellipse_action(self):
@@ -809,6 +844,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_ellipse(self.get_id(),pen)  # 待写
         self.statusBar().showMessage('中点圆算法绘制椭圆')
         self.list_widget.clearSelection()
+        self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def curve_bezier_action(self):
@@ -817,6 +853,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_curve('Bezier',self.get_id(),pen)  # 待写
         self.statusBar().showMessage('Bezier算法绘制曲线')
         self.list_widget.clearSelection()
+        self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def curve_b_spline_action(self):
@@ -825,6 +862,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_curve('B-spline',self.get_id(),pen)
         self.statusBar().showMessage('B-spline算法绘制曲线')
         self.list_widget.clearSelection()
+        self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def freePainting_action(self):
@@ -842,6 +880,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_translate()
         self.statusBar().showMessage('平移变换')
         # self.list_widget.clearSelection()
+        # self.list_widget.setCurrentRow(-1)
         # self.canvas_widget.clear_selection()
 
     def rotate_action(self):
@@ -932,6 +971,7 @@ class SavePix(QDialog):
         self.button1 = QPushButton("Cancel", self)
         self.button1.clicked.connect(self.cancel)
         self.button2 = QPushButton("Save", self)
+        self.button2.setFocus()
         self.button2.clicked.connect(self.save)
         self.hlayout3 = QHBoxLayout()
         self.hlayout3.addWidget(self.button1)
@@ -979,7 +1019,7 @@ class Pix(QDialog):
     """
     def __init__(self,pixmap):
         super().__init__()
-        self.setWindowTitle("图片展示")
+        self.setWindowTitle("图片展示(保存成功！)")
         self.layout = QHBoxLayout()
         self.label = QLabel()
         self.label.resize(800, 480)
@@ -1125,66 +1165,33 @@ class Login2(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Login")
-        self.resize(613, 306)
+        self.resize(487, 322)
 
-        self.label1 = QLabel('Username:',self)
-        self.label1.setGeometry(27, 60,71 , 20)
-        self.line1 = QLineEdit(self)
-        self.line1.setGeometry(110, 60, 181, 21)
-        self.label2 = QLabel('Password:',self)
-        self.label2.setGeometry(27, 100,71 , 20)
-        self.line2 = QLineEdit(self)
-        self.line2.setGeometry(110, 100, 181, 21)
+        self.label1 = QLabel(self)
+        self.label1.setGeometry(30, 30, 1200 , 100)
+        pix = QPixmap("QTImages/login2.png")
+        self.label1.setPixmap(pix)
+        self.label1.setScaledContents(True)  # 自适应QLabel大小
 
-        self.button1=QPushButton("Log in User",self)
-        self.button1.setGeometry(140,140,121,32)
+        self.button1=QPushButton("Start Now",self)
+        self.button1.setGeometry(180,270,112,32)
         self.button1.clicked.connect(self.on_click1)
-        self.button2=QPushButton("Register",self)
-        self.button2.setGeometry(140,180,121,32)
-        self.button2.clicked.connect(self.on_click2)
-        self.button3=QPushButton("Guest Visit",self)
-        self.button3.setGeometry(140,220,121,32)
-        self.button3.clicked.connect(self.on_click3)
-        self.button4=QPushButton("Exit",self)
-        self.button4.setGeometry(140,260,121,32)
-        self.button4.clicked.connect(self.on_click4)
 
-        pic = QLabel(self)
-        pixmap = QPixmap("QTImages/login_pic.png") # 按指定路径找到图片
-        pic.setScaledContents(True)  # 让图片自适应label大小
-        pic.setPixmap(pixmap)  # 在label上显示图片
-        pic.setGeometry(340, 15, 261, 271)
+        palette = QPalette()
+        pix = QPixmap("QTImages/bkg.jpg")
 
+        pix = pix.scaled(self.width(),self.height())
 
-    def Check(self,name,pwd):
-        return True
+        palette.setBrush(QPalette.Background, QBrush(pix))
+        self.setPalette(palette)
+        # self.painter=QPainter(self)
+        # self.painter.drawPixmap(self.rect(), QPixmap("QTImage/bkg.jpg"), self.rect())
 
 
     @pyqtSlot()
     def on_click1(self):  # 登陆界面
-        # 检查用户名合法性
-        if self.Check(self.line1.text(), self.line2.text()):
-            QMessageBox.information(self, "Title", "Login Success!")
-            self.accept()
-        else:
-            QMessageBox.warning(self, "Warning","Username or password error!", QMessageBox.Ok)
-            self.line1.clear()
-            self.line2.clear()
-            self.line1.setFocus()
-
-
-    def on_click2(self):  # 注册界面
-        r=Register()
-        if r.exec()==QDialog.Accepted:
-            r.close()
-
-    def on_click3(self):  # 游客登陆界面
-        global isGuest
-        isGuest = True #修改全局变量为false
         self.accept()
 
-    def on_click4(self):  # 退出界面
-        self.close()
 
 
 
