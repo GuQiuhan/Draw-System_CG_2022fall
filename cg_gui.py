@@ -152,21 +152,35 @@ class MyCanvas(QGraphicsView):
 
     def clear_selection(self):
         if self.selected_id != '' and self.item_dict!= {} and self.item_dict[self.selected_id] != None:
-            self.item_dict[self.selected_id].selected = False
-            self.item_dict[self.selected_id].update()
-            self.selected_id = ''
-        self.updateScene([self.sceneRect()])
+            item_list_p = self.scene().items()
+            for p in item_list_p:
+                if p.id == self.selected_id:
+                    self.scene().removeItem(p)
+                    self.temp_item = MyItem(self.temp_item.id, self.temp_item.item_type, self.temp_item.p_list,
+                                            self.temp_item.algorithm,
+                                            self.temp_item.pen)
+                    self.item_dict[self.selected_id] = self.temp_item
+                    self.item_dict[self.selected_id].selected = False
+                    self.scene().addItem(self.temp_item)
+                    break
+
+
+            # self.item_dict[self.selected_id].selected = False
+            # self.item_dict[self.selected_id].update()
+        self.selected_id = ''
+       # self.updateScene([self.sceneRect()])
 
 
 
     def selection_changed(self, selected):
+
         self.main_window.statusBar().showMessage('图元选择： %s' % selected)
         if self.selected_id != '' and self.item_dict!={}:
             self.item_dict[self.selected_id].selected = False
             self.item_dict[self.selected_id].update()
         self.selected_id = selected
 
-        if self.item_dict!= {} and self.item_dict[self.selected_id] != None:
+        if self.item_dict!= {} and self.selected_id != '' and self.item_dict[self.selected_id] != None:
             self.item_dict[selected].selected = True
             self.item_dict[selected].update()
         self.status = ''
@@ -740,6 +754,7 @@ class MainWindow(QMainWindow):
         clip_liang_barsky_act.triggered.connect(self.clip_liang_barsky_action)
 
         self.list_widget.currentTextChanged.connect(self.canvas_widget.selection_changed)
+       # self.list_widget.currentTextChanged.connect(self.SelectionChanged)
 
         # 设置主窗口的布局
         # 添加表单布局
@@ -767,6 +782,11 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage('空闲')
         self.resize(600, 600)
         self.setWindowTitle('CG Demo')
+
+    def SelectionChanged(self):
+        if self.list_widget.currentRow()==-1:
+            return
+        self.canvas_widget.selection_changed()
 
     def get_id(self):
         _id = str(self.item_cnt)
@@ -799,7 +819,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_line('Naive', self.get_id(),pen)
         self.statusBar().showMessage('Naive算法绘制线段')
         self.list_widget.clearSelection()
-        self.list_widget.setCurrentRow(-1)
+        #self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def line_dda_action(self):
@@ -808,7 +828,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_line('DDA', self.get_id(),pen)
         self.statusBar().showMessage('DDA算法绘制线段')
         self.list_widget.clearSelection()
-        self.list_widget.setCurrentRow(-1)
+        #self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def line_bresenham_action(self):
@@ -817,7 +837,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_line('Bresenham', self.get_id(),pen)  #待写
         self.statusBar().showMessage('Bresenham算法绘制线段')
         self.list_widget.clearSelection()
-        self.list_widget.setCurrentRow(-1)
+        #self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def polygon_dda_action(self):
@@ -826,7 +846,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_polygon('DDA', self.get_id(),pen)
         self.statusBar().showMessage('DDA算法绘制多边形')
         self.list_widget.clearSelection()
-        self.list_widget.setCurrentRow(-1)
+        #self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def polygon_bresenham_action(self):
@@ -835,7 +855,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_polygon('Bresenham', self.get_id(),pen)
         self.statusBar().showMessage('Bresenham算法绘制多边形')
         self.list_widget.clearSelection()
-        self.list_widget.setCurrentRow(-1)
+        #self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def ellipse_action(self):
@@ -844,7 +864,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_ellipse(self.get_id(),pen)  # 待写
         self.statusBar().showMessage('中点圆算法绘制椭圆')
         self.list_widget.clearSelection()
-        self.list_widget.setCurrentRow(-1)
+        #self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def curve_bezier_action(self):
@@ -853,7 +873,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_curve('Bezier',self.get_id(),pen)  # 待写
         self.statusBar().showMessage('Bezier算法绘制曲线')
         self.list_widget.clearSelection()
-        self.list_widget.setCurrentRow(-1)
+        #self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def curve_b_spline_action(self):
@@ -862,7 +882,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_curve('B-spline',self.get_id(),pen)
         self.statusBar().showMessage('B-spline算法绘制曲线')
         self.list_widget.clearSelection()
-        self.list_widget.setCurrentRow(-1)
+        #self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def freePainting_action(self):
@@ -871,6 +891,7 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_draw_free('DDA', self.get_id(),pen)
         self.statusBar().showMessage('自由笔画')
         self.list_widget.clearSelection()
+        #self.list_widget.setCurrentRow(-1)
         self.canvas_widget.clear_selection()
 
     def translate_action(self):
