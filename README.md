@@ -1,57 +1,59 @@
-# README
+# Draw System
 
-* 软件功能说明
+## Introduction
 
-  本程序完成了一个简易的交互的绘图系统，实现了基础的图形学算法，包括线画图元生成、贝塞尔曲线生成、B样条曲线生成、二维图形的裁剪和变换。同时可以满足画布的重置、保存、设置画笔等交互功能。
+This tool completed a simple interactive drawing system and realized basic graphics algorithms, including
 
-* 开发环境说明
-  * MacOS 10.15.6 
-  *  PyCharm 2020.3.3。
-    * Python 3.7.7
-      * numpy 1.23.0、Pillow 9.2.0、PyQt5 5.15.7
+* line drawing element 
+* Bezier curve
+* B-spline curve
+* cutting of two-dimensional graphics
+* transformation of two-dimensional graphics
 
-* 操作说明
+At the same time, it can meet the interactive functions of resetting, saving and setting brushes of canvas.
 
-  * 单击下方"Start Now"开始程序
+## Development environment
 
-    <img src="images/%E6%88%AA%E5%B1%8F2023-02-12%20%E4%B8%8A%E5%8D%8812.07.54.png" alt="截屏2023-02-12 上午12.07.54" style="zoom: 50%;" />
+* MacOS 10.15.6 
+*  PyCharm 2020.3.3。
+  * Python 3.7.7
+    * numpy 1.23.0、Pillow 9.2.0、PyQt5 5.15.7
 
-    
+## How to use
 
-  * 绘制图元
+* Click "Start Now" below to start the program.
 
-    <img src="images/%E6%88%AA%E5%B1%8F2023-02-12%20%E4%B8%8A%E5%8D%8812.10.15.png" alt="截屏2023-02-12 上午12.10.15" style="zoom:50%;" />
+  ![截屏2023-09-22 上午8.22.42](images/%E6%88%AA%E5%B1%8F2023-09-22%20%E4%B8%8A%E5%8D%888.22.42-5342172.png)
 
-    
+* Drawing
 
-  * 编辑图元
+  ![截屏2023-09-22 上午8.27.28](images/%E6%88%AA%E5%B1%8F2023-09-22%20%E4%B8%8A%E5%8D%888.27.28.png)
 
-    ![截屏2023-02-12 上午12.12.44](images/%E6%88%AA%E5%B1%8F2023-02-12%20%E4%B8%8A%E5%8D%8812.12.44-6132092.png)
+* Editing
 
-    ![截屏2023-02-12 上午12.15.38](images/%E6%88%AA%E5%B1%8F2023-02-12%20%E4%B8%8A%E5%8D%8812.15.38-6132219.png)
+  ![截屏2023-09-22 上午8.27.48](images/%E6%88%AA%E5%B1%8F2023-09-22%20%E4%B8%8A%E5%8D%888.27.48.png)![截屏2023-09-22 上午8.28.09](images/%E6%88%AA%E5%B1%8F2023-09-22%20%E4%B8%8A%E5%8D%888.28.09.png)
 
-    > 此时若出现以下错误提示，需先选中图元至出现红框，在进行后续操作
-    >
-    > <img src="images/%E6%88%AA%E5%B1%8F2023-02-12%20%E4%B8%8A%E5%8D%8812.18.46.png" alt="截屏2023-02-12 上午12.18.46" style="zoom:33%;" />
+  
 
-    
+  > At this time, if the following error prompts appear, you need to select the entity until a red box appears, and then proceed with the subsequent operation.
+  >
+  > ![截屏2023-09-22 上午8.28.56](images/%E6%88%AA%E5%B1%8F2023-09-22%20%E4%B8%8A%E5%8D%888.28.56.png)
 
-  * 保存画布
+  
 
-    ![截屏2023-02-12 上午12.19.37](images/%E6%88%AA%E5%B1%8F2023-02-12%20%E4%B8%8A%E5%8D%8812.19.37-6132633.png)
+* Save the canvas
 
-    ![截屏2023-02-12 上午12.20.33](images/%E6%88%AA%E5%B1%8F2023-02-12%20%E4%B8%8A%E5%8D%8812.20.33-6132700.png)   
+  ![截屏2023-09-22 上午8.30.30](images/%E6%88%AA%E5%B1%8F2023-09-22%20%E4%B8%8A%E5%8D%888.30.30.png)
 
-    ![截屏2023-02-12 上午12.28.12](images/%E6%88%AA%E5%B1%8F2023-02-12%20%E4%B8%8A%E5%8D%8812.28.12-6132951.png)
 
-    
+![截屏2023-09-22 上午8.30.54](images/%E6%88%AA%E5%B1%8F2023-09-22%20%E4%B8%8A%E5%8D%888.30.54.png)
 
-  * 重置画布
+![截屏2023-09-22 上午8.31.21](images/%E6%88%AA%E5%B1%8F2023-09-22%20%E4%B8%8A%E5%8D%888.31.21.png)
 
-    ![截屏2023-02-12 上午12.26.21](images/%E6%88%AA%E5%B1%8F2023-02-12%20%E4%B8%8A%E5%8D%8812.26.21-6132824.png)
+* Reset the canvas
 
-    ![截屏2023-02-12 上午12.29.30](images/%E6%88%AA%E5%B1%8F2023-02-12%20%E4%B8%8A%E5%8D%8812.29.30-6133006.png)
+  ![截屏2023-09-22 上午8.31.40](images/%E6%88%AA%E5%B1%8F2023-09-22%20%E4%B8%8A%E5%8D%888.31.40.png)
 
-    
+  ![截屏2023-09-22 上午8.31.56](images/%E6%88%AA%E5%B1%8F2023-09-22%20%E4%B8%8A%E5%8D%888.31.56.png)
 
-    
+  > For the whole process demonstration, please refer to `demonstration.mp4`
